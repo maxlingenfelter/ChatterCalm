@@ -28,12 +28,6 @@ const queryClient = new QueryClient();
 const RootStack = createNativeStackNavigator();
 
 export default function App() {
-
-
-
-
-	// TODO: Refactor all and login onboarding into separate stack navigator
-
 	return (
 		<QueryClientProvider client={queryClient}>
 			<View style={styles.container}>
