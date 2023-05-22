@@ -13,8 +13,7 @@ A simple mobile chat app aimed to help improve mental health through conversatio
 
 ### Design
 
-![image](https://github.com/PekayTab/ChatterCalm/assets/36557751/7bb7bc09-a917-4e97-9435-43b8c3c5edc6)
-![image](https://github.com/PekayTab/ChatterCalm/assets/36557751/46381b1a-5796-4477-ae5f-b01ab6ad9d22)
+![image](https://github.com/PekayTab/ChatterCalm/assets/36557751/b3d04451-726c-4fae-805a-786b96bf6094)
 
 ## Getting Started With Development
 
