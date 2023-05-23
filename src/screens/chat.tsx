@@ -1,4 +1,4 @@
-import { View, Text, Button, SafeAreaView, StyleSheet, ScrollView } from "react-native";
+import { View, Text, Button, SafeAreaView, StyleSheet, ScrollView, Pressable } from "react-native";
 import { OPENAI_API_KEY } from ".env";
 import moment from "moment";
 import * as SplashScreen from "expo-splash-screen";
@@ -6,6 +6,10 @@ import * as Font from "expo-font";
 import { useFonts, Poppins_500Medium } from "@expo-google-fonts/poppins";
 import { useCallback } from "react";
 import { Colors } from "react-native/Libraries/NewAppScreen";
+import { LinearGradient } from "expo-linear-gradient";
+
+//Svgs
+import SendSVG from "../../assets/svgs/send.svg"
 
 const ChatScreen = ({ route }) => {
     // Load fonts using splash-screen and Font.loadAsync
@@ -44,7 +48,30 @@ const ChatScreen = ({ route }) => {
                     </Text>
                 </ScrollView>
                 <View style={styles.footerBar_container}>
-                    <Text style={{ color: "#fff" }} > Footer</Text>
+                    {/* <Text style={{ color: "#fff" }} > Footer</Text> */}
+                    <View style={styles.row}>
+                        <View style={styles.col}>
+                            <View >
+                                <Button title="Send" color="#fff" />
+                            </View>
+                        </View>
+                        <View style={styles.col}>
+                            <View style={styles.sendBtn_container}>
+                                <Pressable onPressIn={() => console.log('SendBtn Pressed!')} hitSlop={8}>
+                                    <LinearGradient
+                                        colors={["#B5C49C", "#959595"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 48, y: 48 }}
+                                        style={styles.sendBtn}
+                                    >
+                                        <SendSVG />
+                                    </LinearGradient>
+                                </Pressable>
+                            </View>
+                        </View>
+
+
+                    </View>
                 </View>
             </SafeAreaView>
         </View >
@@ -85,7 +112,39 @@ const styles = StyleSheet.create({
     //FooterBar
     footerBar_container: {
         backgroundColor: "#191919",
+        paddingHorizontal: 24,
+        paddingVertical: 20,
     },
+
+    row: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        width: '100%',
+        // Align the content of the row
+        alignItems: 'center', // horizontal
+        justifyContent: 'center', // vertical
+    },
+
+    col: {
+        width: '25%', // is 50% of container width
+    },
+
+    sendBtn_container: {
+    },
+    sendBtn: {
+        height: 48,
+        width: 48,
+        //Actual Styles
+        alignItems: "center",
+        padding: 16,
+        borderRadius: 32,
+        //Positioning
+        marginHorizontal: 38,
+    },
+    sendBtn_text: {},
+
+
+
 });
 
 export default ChatScreen;
