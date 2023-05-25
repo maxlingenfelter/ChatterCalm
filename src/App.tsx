@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import NetInfo from "@react-native-community/netinfo";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
