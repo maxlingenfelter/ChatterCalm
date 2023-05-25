@@ -1,150 +1,199 @@
-import { View, Text, Button, SafeAreaView, StyleSheet, ScrollView, Pressable } from "react-native";
-import { OPENAI_API_KEY } from ".env";
-import moment from "moment";
-import * as SplashScreen from "expo-splash-screen";
-import * as Font from "expo-font";
-import { useFonts, Poppins_500Medium } from "@expo-google-fonts/poppins";
-import { useCallback } from "react";
-import { Colors } from "react-native/Libraries/NewAppScreen";
-import { LinearGradient } from "expo-linear-gradient";
+import React, { useState, useCallback } from 'react';
+import { View, Text, SafeAreaView, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import moment from 'moment';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts, Poppins_500Medium } from '@expo-google-fonts/poppins';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Configuration, OpenAIApi } from 'openai';
+import { OPENAI_API_KEY } from '.env';
 
-//Svgs
-import SendSVG from "../../assets/svgs/send.svg"
+// Svgs
+import SendSVG from '../../assets/svgs/send.svg';
+import { useTheme } from '@react-navigation/native';
 
+const token = OPENAI_API_KEY;
+const configuration = new Configuration({
+    apiKey: token,
+});
+const openai = new OpenAIApi(configuration);
+
+// Type for chat message
+type ChatMessageType = {
+    type: 'user' | 'bot';
+    text: string;
+};
+
+// Array of chat messages
+let MESSAGES: ChatMessageType[] = [];
+
+// Component
 const ChatScreen = ({ route }) => {
     // Load fonts using splash-screen and Font.loadAsync
-    const [fontsLoaded] = useFonts({
-        Poppins_500Medium,
-    });
 
-    const onLayoutRootView = useCallback(async () => {
-        if (fontsLoaded) {
-            await SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded]);
 
-    if (!fontsLoaded) {
-        return null;
-    }
 
-  // Dymamic value for time
-    const date = moment().format("LT");
+    // Dynamic value for time
+    const date = moment().format('LT');
+
+    // Input Value
+    const [inputValue, setInputValue] = useState('');
+
+    // Event handler for button press
+    const handlePress = () => {
+        newUserMessage(inputValue);
+        setInputValue('');
+    };
 
     return (
-        <View onLayout={onLayoutRootView}>
-            <View style={styles.header_container}>
-                <Text style={styles.header_text}>{date}</Text>
+        <View style={styles.container}>
+            <View style={styles.headerContainer}>
+                <Text style={styles.headerText}>{date}</Text>
             </View>
-            <SafeAreaView style={styles.chat_container}>
+            <SafeAreaView style={styles.chatContainer}>
                 <ScrollView style={styles.chat}>
-                    <Text>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                        eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-                        minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-                        aliquip ex ea commodo consequat. Duis aute irure dolor in
-                        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-                        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-                        culpa qui officia deserunt mollit anim id est laborum.
-                    </Text>
+                    {MESSAGES.map((message, index) => (
+                        <View key={index}>
+                            <View>
+                                <Text style={styles.messageText}>{message.text}</Text>
+                            </View>
+                        </View>
+                    ))}
                 </ScrollView>
-                <View style={styles.footerBar_container}>
-                    {/* <Text style={{ color: "#fff" }} > Footer</Text> */}
-                    <View style={styles.row}>
-                        <View style={styles.col}>
-                            <View >
-                                <Button title="Send" color="#fff" />
-                            </View>
+                <View style={styles.footerBarContainer}>
+                    <View style={styles.inputRow}>
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Write a message..."
+                                placeholderTextColor="#fff"
+                                underlineColorAndroid="transparent"
+                                value={inputValue}
+                                onChangeText={setInputValue}
+                            />
                         </View>
-                        <View style={styles.col}>
-                            <View style={styles.sendBtn_container}>
-                                <Pressable onPressIn={() => console.log('SendBtn Pressed!')} hitSlop={8}>
-                                    <LinearGradient
-                                        colors={["#B5C49C", "#959595"]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 48, y: 48 }}
-                                        style={styles.sendBtn}
-                                    >
-                                        <SendSVG />
-                                    </LinearGradient>
-                                </Pressable>
-                            </View>
+                        <View style={styles.sendButtonContainer}>
+                            <Pressable onPress={handlePress} hitSlop={8}>
+                                <LinearGradient
+                                    colors={['#B5C49C', '#959595']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.sendButton}
+                                >
+                                    <SendSVG />
+                                </LinearGradient>
+                            </Pressable>
                         </View>
-
-
                     </View>
                 </View>
             </SafeAreaView>
-        </View >
+        </View>
     );
 };
 
+// Styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#131715",
+        backgroundColor: '#131715',
     },
-    header_container: {
-        backgroundColor: "#191919",
-        justifyContent: "center",
-        alignItems: "center",
+    headerContainer: {
+        backgroundColor: '#191919',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    header_text: {
-        color: "#fff",
-    //Font
-        fontFamily: "Poppins_500Medium",
-        fontWeight: "500",
+    headerText: {
+        color: '#fff',
+        fontFamily: 'Poppins_500Medium',
+        fontWeight: '500',
         fontSize: 38,
-
-        //Padding
         paddingHorizontal: 20,
         paddingTop: 57,
         paddingBottom: 21,
     },
-
-    //Chat
-    chat_container: {
-        backgroundColor: "#52925b",
-        height: 650,
+    chatContainer: {
+        backgroundColor: '#52925b',
+        height: 660,
     },
     chat: {},
-
-
-    //FooterBar
-    footerBar_container: {
-        backgroundColor: "#191919",
+    footerBarContainer: {
+        backgroundColor: '#191919',
         paddingHorizontal: 24,
-        paddingVertical: 20,
+        paddingTop: 20,
+        paddingBottom: 45,
+        borderRadius: 32,
+        top: 60,
     },
-
-    row: {
+    inputRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         width: '100%',
-        // Align the content of the row
-        alignItems: 'center', // horizontal
-        justifyContent: 'center', // vertical
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-
-    col: {
-        width: '25%', // is 50% of container width
+    inputContainer: {
+        width: 274,
     },
-
-    sendBtn_container: {
+    sendButtonContainer: {
+        width: 48,
+        marginLeft: 16,
     },
-    sendBtn: {
+    input: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        width: '100%',
+        height: 48,
+        borderRadius: 50,
+        backgroundColor: '#344e41',
+        color: 'white',
+    },
+    sendButton: {
         height: 48,
         width: 48,
-        //Actual Styles
-        alignItems: "center",
+        alignItems: 'center',
         padding: 16,
         borderRadius: 32,
-        //Positioning
-        marginHorizontal: 38,
     },
-    sendBtn_text: {},
-
-
-
+    messageText: {
+        color: 'white',
+    },
 });
+
+// Function to handle user message and generate AI response
+async function newUserMessage(text) {
+    const userMessage: ChatMessageType = { type: 'user', text };
+    MESSAGES.push(userMessage);
+
+    const prompt = buildPrompt(MESSAGES);
+
+    console.log('Prompt:', prompt);
+
+    try {
+        const response = await openai.createCompletion({
+            model: 'text-davinci-003',
+            prompt,
+            max_tokens: 100,
+        });
+
+        console.log('Response:', response.data);
+
+        const aiResponse = response.data.choices[0].text.trim();
+
+        const botMessage: ChatMessageType = { type: 'bot', text: aiResponse };
+        MESSAGES.push(botMessage);
+
+        console.log('AI:', aiResponse);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Helper function to build the prompt from the messages array
+function buildPrompt(messages) {
+    let prompt = '';
+    for (const message of messages) {
+        prompt += `${message.type === 'user' ? 'User' : 'Bot'}: ${message.text}\n`;
+    }
+    return prompt;
+}
 
 export default ChatScreen;
