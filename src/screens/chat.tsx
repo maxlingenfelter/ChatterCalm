@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, version } from 'react';
 import {
     View,
     Text,
@@ -44,17 +44,30 @@ const ChatScreen = ({ route }) => {
         }
 
         const userMessage: ChatMessageType = { role: 'user', content: inputValue };
-        setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+        let updatedMessages = [...messages];
+        if (messages.length === 0) {
+            // Send prePrompt only if it's the first message
+            const prePrompt: ChatMessageType = {
+                role: 'system',
+                content: 'The following is a conversation with an AI assistant within a chat app meant to provide personalized conversational therapy accessible to all. The assistant is helpful, clever, friendly, understanding and very sympathetic.',
+            };
+            updatedMessages.push(prePrompt);
+        }
+        updatedMessages.push(userMessage);
+
+        setMessages(updatedMessages);
         setInputValue('');
         setIsWaitingForResponse(true);
 
         try {
             const response = await openai.createChatCompletion({
                 model: 'gpt-3.5-turbo',
-                messages: [...messages, userMessage],
+                messages: updatedMessages,
             });
 
-            console.log('OpenAI API Response:', response);
+            //Format resopnse so its readable in console
+            console.log(JSON.stringify(response, null, 2));
 
             if (response && response.data && response.data.choices && response.data.choices.length > 0) {
                 const aiResponse = response.data.choices[0].message.content;
@@ -90,6 +103,10 @@ const ChatScreen = ({ route }) => {
     };
     }, []);
 
+    const handleInputBlur = () => {
+        setKeyboardOffset(0);
+    };
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -99,23 +116,39 @@ const ChatScreen = ({ route }) => {
             <View style={styles.headerContainer}>
                 <Text style={styles.headerText}>{date}</Text>
             </View>
-            <SafeAreaView style={styles.chatContainer}>
-                <ScrollView style={styles.chat}>
-                    {messages.map((message, index) => (
-                        <View key={index}>
-                            {/* Distingush between messages wuth type "user" vs ones with type "assistant\" */}
-                            {message.role === 'user' ? (
-                                <View style={styles.userMessageContainer}>
-                                    <Text style={styles.userMessage}>{message.content}</Text>
-                                </View>
-                            ) : (
-                                <View style={styles.assistantMessageContainer}>
-                                    <Text style={styles.assistantMessage}>{message.content}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ))}
-                </ScrollView>
+            <View style={styles.contentContainer}>
+                <SafeAreaView style={styles.chatContainer}>
+                    <ScrollView
+                        style={styles.chat}
+                        contentContainerStyle={styles.chatContent}
+                        ref={(ref) => {
+                            // Scroll to bottom when a new message is added
+                            if (ref) {
+                                ref.scrollToEnd({ animated: true });
+                            }
+                        }}
+                    >
+                        {messages.filter((message) => message.role !== 'system').map((message, index) => (
+                            //Separate message  of user and assistant
+                            <View
+                                key={index}
+                                style={[
+                                    styles.messageContainer,
+                                    message.role === 'user' ? styles.userMessageContainer : styles.assistantMessageContainer,
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.message,
+                                        message.role === 'user' ? styles.userMessage : styles.assistantMessage,
+                                    ]}
+                                >
+                                    {message.content}
+                                </Text>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </SafeAreaView>
                 <View style={styles.footerBarContainer}>
                     <View style={styles.inputRow}>
                         <View style={styles.inputContainer}>
@@ -127,6 +160,7 @@ const ChatScreen = ({ route }) => {
                                 value={inputValue}
                                 onChangeText={setInputValue}
                                 onFocus={() => setKeyboardOffset(0)}
+                                onBlur={handleInputBlur}
                             />
                         </View>
                         <View style={styles.sendButtonContainer}>
@@ -147,15 +181,66 @@ const ChatScreen = ({ route }) => {
                         </View>
                     </View>
                 </View>
-            </SafeAreaView>
+            </View>
         </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
+
+    //Start message styles
+
+    messageContainer: {},
+
+    userMessageContainer: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#b0bd9a',
+        paddingVertical: 16,
+        paddingLeft: 32,
+        paddingRight: 40,
+        marginBottom: 40,
+        borderRadius: 20,
+        //Border radius for user message
+        borderTopLeftRadius: 20,
+        borderBottomLeftRadius: 20,
+        borderTopRightRadius: 0,
+        borderBottomRightRadius: 4,
+
+    },
+    assistantMessageContainer: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#191919',
+        paddingVertical: 16,
+        paddingLeft: 40,
+        paddingRight: 32,
+        marginBottom: 40,
+        //Border radius for assistant message
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 20,
+        borderTopRightRadius: 20,
+        borderBottomRightRadius: 4,
+    },
+
+    message: {},
+    userMessage: {
+        color: '#191919',
+        maxWidth: 159,
+    },
+    assistantMessage: {
+        color: '#fff',
+        maxWidth: 159,
+
+    },
+
+
+
+ //End message styles
+
+
+
     container: {
         flex: 1,
-        backgroundColor: '#131715',
+        backgroundColor: '#52925b',
     },
     headerContainer: {
         backgroundColor: '#191919',
@@ -170,21 +255,33 @@ const styles = StyleSheet.create({
         paddingTop: 57,
         paddingBottom: 21,
     },
+    contentContainer: {
+        flex: 1,
+    },
     chatContainer: {
         backgroundColor: '#52925b',
         flex: 1,
     },
-    chat: {},
+    chat: {
+        flex: 1,
+        paddingHorizontal: 24,
+    },
+    chatContent: {
+        flexGrow: 1,
+        justifyContent: 'flex-end',
+    },
     footerBarContainer: {
         backgroundColor: '#191919',
         paddingHorizontal: 24,
         paddingTop: 20,
-        paddingBottom: 45,
-        borderRadius: 32,
+        paddingBottom: 35,
+        // borderRadius: 32,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
     },
     inputRow: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
+        fexWrap: 'wrap',
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
@@ -215,9 +312,6 @@ const styles = StyleSheet.create({
     messageText: {
         color: 'white',
     },
-
-    //Message Styles
-    
 });
 
 export default ChatScreen;
